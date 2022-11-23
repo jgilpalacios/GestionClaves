@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <title></title>
+  <script languaje="javascript" src="./js/aes.js">/* AES JavaScript implementation */</script>
+  <script languaje="javascript" src="./js/aes-ctr.js">/* AES Counter Mode implementation */</script>
+</head>
+
+<body>
+  <p>Busca el archivo con las claves encriptadas:<input id="file-claves" type="file"></p>
+  <p>Busca el archivo con la clave encriptadora:<input id="file-encript" type="file"></p>
+  <p>introduce la clave personal:<input id="clavep" onmouseover="this.type='text'" onmouseout="this.type='password'"
+      type="password"></p>
+  
+  <textarea rows="4" cols="64" name="claveDec" id="encArea1"></textarea>
+  <input  name="claveDec" id="encArea2" type="text"  size="200">
+  <p>clave decriptadora:</p>
+  <input id="e1" type="text" size="200"><br>
+ 
+  <p>
+    
+    <input title="Genera y Guarda los archivos con las claves y clave encriptadora, encriptados." name="guarda" value="guarda" type="button" onclick="guardaTodo()">
+    <input title="Hace el proceso de desencriptado y muestra los sitios." name="des" value="desencripta" type="button" onclick="lanzaProceso()">
+    <input title="Añade espacio para un nuevo sitio al final de la lista." name="+" value="+" type="button" onclick="annade()">
+    <input title="Genera una clave encriptadora nueva (256 caracteres totlamente aleatorios)." name="EncNueva" value="EncNueva" type="button"
+      onclick="document.getElementById('e1').value=generatePasswordRand(256,'rand')">
+    <input title="Genera un archivo csv con los datos de los sitios en claro, se puede abrir con excel, calc o el bloc de notas. ¡¡¡LAS CLAVES NO VAN ENCRIPTADAS!!!" name="aCSV" value="aCSV" type="button"
+      onclick="aCSV()">
+  </p>
+  <table style="width: 100%" border="1">
+    <tbody id="listaClaves">
+      
+    </tbody>
+  </table>
+ 
+</body>
+<script type="text/javascript">
+ 
+  const generatePasswordRand = (length, type) => {
+    switch (type) {
+      case 'num':
+        characters = '0123456789';
+        break;
+      case 'alf':
+        characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        break;
+      case 'alfNumEsp':
+        characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-*?!@#$/(){}=.,;:';
+        break;
+      case 'rand':
+        //FOR ↓
+        break;
+      default:
+        characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        break;
+    }
+    let pass = '';
+    for (let i = 0; i < length; i++) {
+      if (type == 'rand') {
+        pass += String.fromCharCode((Math.floor((Math.random() * 100)) % 94) + 33);
+      } else {
+        pass += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+    }
+    return pass;
+  }
+  let misSitios = [];
+  let claveEnc;
+  let clave;
+  let textoEnc;
+  let texto;
+  const colecta = () => {//alert('kk'+document.getElementById('n0'))
+    let i = 0;
+    let sitios = [];
+    while (document.getElementById('n' + i)) {//alert('kk')
+      let sitio = {
+        nombre: document.getElementById('n' + i).value,
+        url: document.getElementById('url' + i).value,
+        usuario: document.getElementById('usuario' + i).value,
+        clave: document.getElementById('clave' + i++).value
+      }
+      sitios.push(sitio);
+    }
+    //alert(JSON.stringify(sitios));
+    return sitios;
+  }
+  const encripta = (texto, clave, clavePersonal) => {
+    if (!clave || !clavePersonal) {
+      alert('Falta la clave encriptadora o la clave personal.')
+    } else {
+      return { claveEnc: Aes.Ctr.encrypt(clave, clavePersonal, 256), textoEnc: Aes.Ctr.encrypt(Aes.Ctr.encrypt(texto, clavePersonal, 256), clave, 256) };
+    }
+  }
+
+  const decripta = (enc, claveEnc, clavePersonal) => {
+    if (!claveEnc || !clavePersonal) {
+      alert('Falta la clave encriptadora o la clave personal.')
+    } else {
+      let clave = Aes.Ctr.decrypt(claveEnc, clavePersonal, 256);//alert(clave);
+      let aux = Aes.Ctr.decrypt(enc, clave, 256)
+      return { clave: clave, texto: Aes.Ctr.decrypt(aux, clavePersonal, 256) };
+    }
+  }
+
+  const copiarAlPortapapeles = (id_elemento) => {
+    let aux = document.createElement("input");
+    aux.setAttribute("value", document.getElementById(id_elemento).value);
+    document.body.appendChild(aux);
+    aux.select();
+    document.execCommand("copy");
+    document.body.removeChild(aux);
+  }
+
+  const generaTabla = () => {
+    let html = `<tr>
+        <th title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">nombre</th>
+        <th title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">url del sitio</th>
+        <th>usuario</th>
+        <th>clave</th>
+      </tr>`;
+    misSitios.forEach((sitio, i) => {
+      html += `<tr>
+        <td><input id="n${i}" type="text" value="${sitio.nombre}"></td>
+        <td><input id="url${i}" type="text" value="${sitio.url}"></td>
+        <td><input id="usuario${i}" type="text" value="${sitio.usuario}"></td>
+        <td><input id="clave${i}" value="${sitio.clave}" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
+          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
+            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
+            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
+        </td>
+      </tr>`;
+    })
+    document.getElementById('listaClaves').innerHTML = html;
+  }
+
+  const inicial = () => {
+    misSitios = JSON.parse(document.getElementById('ee3').value);
+    generaTabla();
+  }
+
+  const annade = () => {
+    let i = 0;// misSitios.length;//alert('('+document.getElementById('n' + i)+')');
+    let html='';
+    while (document.getElementById('n' + i)) { 
+      if(
+        document.getElementById('n' + i).value.trim()!==''||
+        document.getElementById('url' + i).value.trim()!==''||
+        document.getElementById('usuario' + i).value.trim()!==''||
+        document.getElementById('clave' + i).value.trim()!==''
+
+      ){//si hay algo escrito en nombre
+        let aux={
+          nombre:document.getElementById('n' + i).value,
+          url:document.getElementById('url' + i).value,
+          usuario:document.getElementById('usuario' + i).value,
+          clave:document.getElementById('clave' + i).value,
+        }
+        html += `<tr>
+        <td><input id="n${i}" type="text" value="${aux.nombre}"></td>
+        <td><input id="url${i}" type="text" value="${aux.url}"></td>
+        <td><input id="usuario${i}" type="text" value="${aux.usuario}"></td>
+        <td><input id="clave${i}" value="${aux.clave}" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
+          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
+            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
+            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
+        </td>
+        </tr>`;
+      }else{//si no se sube en blanco
+        html += `<tr>
+        <td><input id="n${i}" type="text" value=""></td>
+        <td><input id="url${i}" type="text" value=""></td>
+        <td><input id="usuario${i}" type="text" value=""></td>
+        <td><input id="clave${i}" value="" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
+          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
+            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
+            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
+        </td>
+      </tr>`;
+      }
+      i++ 
+    }
+    //añadimos fila en blanco al final.
+    html += `<tr>
+        <td><input id="n${i}" type="text" value=""></td>
+        <td><input id="url${i}" type="text" value=""></td>
+        <td><input id="usuario${i}" type="text" value=""></td>
+        <td><input id="clave${i}" value="" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
+          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
+            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
+            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
+        </td>
+      </tr>`;
+    document.getElementById('listaClaves').innerHTML = html;
+    //generaTabla();
+  }
+
+  //Esta es para que funcione el boton para file
+  const leerArchivo = (e) => {
+    let archivo = e.target.files[0];
+    //alert(e.currentTarget.id);
+    let tipo = e.currentTarget.id;//saber la id del objero que lo lanza
+    if (!archivo) {
+      return;
+    }
+    let lector = new FileReader();
+    lector.onload = (e) => {
+      let contenido = e.target.result;
+      //alert(tipo);
+      if (tipo === 'file-claves') {
+        textoEnc = contenido;
+        document.getElementById('encArea1').innerText=textoEnc;
+      } else if (tipo === 'file-encript') {
+        claveEnc = contenido;//alert(claveEnc);
+        document.getElementById('encArea2').value = contenido;
+        //document.getElementById('e1').value = contenido;
+      } else {
+        alert('No esta pensado para esos.')
+      }
+    };
+    lector.readAsText(archivo);
+  }
+
+
+  function generarBlob(datos) {//alert('se entra');
+    let texto = [];
+    texto.push(datos);
+    //El contructor de Blob requiere un Array en el primer parámetro
+    //así que no es necesario usar toString. el segundo parámetro
+    //es el tipo MIME del archivo
+    return new Blob(texto, {
+      type: 'text/plain'
+    });
+  };
+
+  const descargarArchivo = (contenido, nombreArchivo) => {
+    ///lo de generaBlob, pues el contenido venía como blob:contenidoEnBlob,
+    let texto = [];
+    texto.push(contenido);
+    let contenidoEnBlob = new Blob(texto, {
+      type: 'text/plain'
+    });
+    ///
+    let reader = new FileReader();
+    reader.onload = (event) => {
+      let save = document.createElement('a');
+      save.href = event.target.result;
+      save.target = '_blank';
+      save.download = nombreArchivo || 'archivo.dat';
+      let clicEvent = new MouseEvent('click', {
+        'view': window,
+        'bubbles': true,
+        'cancelable': true
+      });
+      save.dispatchEvent(clicEvent);
+      (window.URL || window.webkitURL).revokeObjectURL(save.href);
+    };
+    reader.readAsDataURL(contenidoEnBlob);
+  };
+
+  const guardaTodo = ()=>{
+    let nombreArcClavesEncriptadas = prompt ('¿Commo Quieres que se llame el archivo con las claves encriptadas(por defecto fk-fecha.txt)?', `fk-${ aFecha() }.txt`);
+    let nombreArcClaveEncriptadora = prompt ('¿Commo Quieres que se llame el archivo con la clave deencriptadora(por defecto fd-fecha.txt)?', `fd-${ aFecha() }.txt`);
+    misSitios=colecta();
+    //let claveEnc;
+    clave=document.getElementById('e1').value;
+    //let textoEnc;
+    texto=JSON.stringify(misSitios);
+    let res=encripta (texto,clave, document.getElementById('clavep').value)
+    //{ claveEnc: Aes.Ctr.encrypt(clave, clavePersonal, 256), textoEnc: Aes.Ctr.encrypt(Aes.Ctr.encrypt(texto, clavePersonal, 256), clave, 256) }
+    //guardamos las claves encriptadas
+    claveEnc=res.claveEnc;
+    textoEnc=res.textoEnc;
+    descargarArchivo(textoEnc, nombreArcClavesEncriptadas);
+    descargarArchivo(claveEnc, nombreArcClaveEncriptadora);
+  };
+
+  const lanzaProceso=()=>{
+    let res=decripta(textoEnc, claveEnc, document.getElementById('clavep').value)
+    clave=res.clave;
+    texto=res.texto;
+    misSitios=JSON.parse(texto);
+    document.getElementById('e1').value=clave;
+    generaTabla();
+  }
+
+  const elimina=(i)=>{
+    //primero actualizamos los datos por si ha habido cambios en el listado
+    misSitios=colecta();
+    let eliminado=misSitios.splice(i,1);
+    generaTabla();
+  }
+
+  const aCSV=()=>{
+    let res='';
+    misSitios.forEach((sitio,i)=>{
+      if(i===0){
+        res+='nombre;'
+        res+='url;'
+        res+='usuario;'
+        res+='clave;\n'
+      }
+      res+='"'+sitio.nombre+'";'
+      res+='"'+sitio.url+'";'
+      res+='"'+sitio.usuario+'";'
+      res+='"'+sitio.clave+'";\n'
+
+    });
+    let nombreArcCSV = prompt ('¿Commo Quieres que se llame el archivo con las claves en un CSV (por defecto CSV-fecha.csv)?', `CSV-${ aFecha() }.csv`);
+    descargarArchivo(res, nombreArcCSV);
+  }
+
+  const aFecha=()=>{
+    let d=new Date();
+    res='';
+    res+=d.getFullYear()+'-';
+    res+=(d.getMonth()+1)+'-';
+    res+=d.getDate()+'_';
+    res+=d.getHours()+'_';
+    res+=d.getMinutes()+'_';
+    res+=d.getSeconds();
+    return res;
+  }
+
+  const ordena=(indice)=>{
+    misSitios.sort(function (a, b) { return a[indice] > b[indice] ? 1 : -1; })
+    generaTabla();
+  }
+
+
+  document.getElementById('file-encript').addEventListener('change', leerArchivo, false);
+  document.getElementById('file-claves').addEventListener('change', leerArchivo, false);
+  generaTabla();
+</script>
+
+</html>
