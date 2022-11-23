@@ -29,12 +29,12 @@
     <input title="Genera un archivo csv con los datos de los sitios en claro, se puede abrir con excel, calc o el bloc de notas. ¡¡¡LAS CLAVES NO VAN ENCRIPTADAS!!!" name="aCSV" value="aCSV" type="button"
       onclick="aCSV()">
   </p>
-  <table style="width: 100%" border="1">
+  <!--<table style="width: 100%" border="1">
     <tbody id="listaClaves">
       
     </tbody>
-  </table>
- 
+  </table>-->
+  <div id="listaClaves" style="display: flex; justify-content:flex-start; flex-wrap: wrap; width: 100%; background-color: rgb(255, 255, 255);"></div>
 </body>
 <script type="text/javascript">
  
@@ -71,7 +71,38 @@
   let clave;
   let textoEnc;
   let texto;
-  let plantilla=`<tr>
+  /**
+    * plantilla y cabecera para que se inserte como cuadros en un div
+    */ 
+  let plantilla=`<div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(220, 250, 220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1),0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
+        <p><input id="n$$i$$" type="text" value="$$nombre$$"></p>
+        <p><input id="url$$i$$" type="text" value="$$url$$"></p>
+        <p><input id="usuario$$i$$" type="text" value="$$usuario$$"></p>
+        <p><input id="clave$$i$$" value="$$clave$$" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles."><br>
+          <input id="cambia$$i$$" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave$$i$$').value=generatePasswordRand(+document.getElementById('longitud$$i$$').value,document.getElementById('tipoCaracteres$$i$$').value)">
+            <input id="borra$$i$$" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina($$i$$)">
+            <select id="tipoCaracteres$$i$$" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud$$i$$" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number"></p>
+      </div>`;
+      let cabecera=`<div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(250, 220,220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1), 0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
+        <p style="font-weight:bold;" title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">Nombre</p>
+        <p style="font-weight:bold;" title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">Url</p>
+        <p style="font-weight:bold;">Usuario</p>
+        <p style="font-weight:bold;">Clave</p>
+      </div>`;
+   /**
+    * plantilla y cabecera para que se inserte en una tabla
+    */   
+  /*let plantilla=`<tr>
         <td><input id="n$$i$$" type="text" value="$$nombre$$"></td>
         <td><input id="url$$i$$" type="text" value="$$url$$"></td>
         <td><input id="usuario$$i$$" type="text" value="$$usuario$$"></td>
@@ -91,6 +122,13 @@
             <input value="10" id="longitud$$i$$" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
         </td>
         </tr>`;
+        let cabecera=`<tr>
+        <th title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">nombre</th>
+        <th title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">url del sitio</th>
+        <th>usuario</th>
+        <th>clave</th>
+      </tr>`;*/
+     
   const colecta = () => {//alert('kk'+document.getElementById('n0'))
     let i = 0;
     let sitios = [];
@@ -134,12 +172,7 @@
   }
 
   const generaTabla = () => {
-    let html = `<tr>
-        <th title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">nombre</th>
-        <th title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">url del sitio</th>
-        <th>usuario</th>
-        <th>clave</th>
-      </tr>`;
+    let html =cabecera;
     misSitios.forEach((sitio, i) => {
       let aux=plantilla.replace('$$nombre$$',sitio.nombre);
       aux=aux.replace('$$url$$',sitio.url);
@@ -158,7 +191,7 @@
 
   const annade = () => {
     let i = 0;// misSitios.length;//alert('('+document.getElementById('n' + i)+')');
-    let html='';
+    let html=cabecera;//'';
     while (document.getElementById('n' + i)) { 
       if(
         document.getElementById('n' + i).value.trim()!==''||
@@ -190,26 +223,13 @@
       i++ 
     }
     //añadimos fila en blanco al final.
-    html += `<tr>
-        <td><input id="n${i}" type="text" value=""></td>
-        <td><input id="url${i}" type="text" value=""></td>
-        <td><input id="usuario${i}" type="text" value=""></td>
-        <td><input id="clave${i}" value="" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
-          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
-          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
-            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
-            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
-            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
-            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
-              <option value="alfNumEsp">LeNúEsp</option>
-              <option value="num">Números</option>
-              <option value="alf">Letras</option>
-              <option value="defecto">Le+Núm</option>
-              <option value="rand">De todo</option>
-            </select>
-            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
-        </td>
-      </tr>`;
+    let aux2=plantilla.replace('$$nombre$$','');
+        aux2=aux2.replace('$$url$$','');
+        aux2=aux2.replace('$$usuario$$','');
+        aux2=aux2.replace('$$clave$$','');
+        aux2=aux2.replace(/\$\$i\$\$/g,i);
+    html +=aux2;
+    
     document.getElementById('listaClaves').innerHTML = html;
     //generaTabla();
   }
