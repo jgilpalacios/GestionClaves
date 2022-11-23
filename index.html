@@ -14,10 +14,10 @@
   <p>introduce la clave personal:<input id="clavep" onmouseover="this.type='text'" onmouseout="this.type='password'"
       type="password"></p>
   
-  <textarea rows="4" cols="64" name="claveDec" id="encArea1"></textarea>
-  <input  name="claveDec" id="encArea2" type="text"  size="200">
+  <textarea rows="4" cols="64" name="claveDec" id="encArea1"></textarea><br>
+  <input  name="claveDec" id="encArea2" type="text" >
   <p>clave decriptadora:</p>
-  <input id="e1" type="text" size="200"><br>
+  <input id="e1" type="text"><br>
  
   <p>
     
@@ -71,6 +71,26 @@
   let clave;
   let textoEnc;
   let texto;
+  let plantilla=`<tr>
+        <td><input id="n$$i$$" type="text" value="$$nombre$$"></td>
+        <td><input id="url$$i$$" type="text" value="$$url$$"></td>
+        <td><input id="usuario$$i$$" type="text" value="$$usuario$$"></td>
+        <td><input id="clave$$i$$" value="$$clave$$" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
+          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
+          <input id="cambia$$i$$" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
+            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave$$i$$').value=generatePasswordRand(+document.getElementById('longitud$$i$$').value,document.getElementById('tipoCaracteres$$i$$').value)">
+            <input id="borra$$i$$" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
+            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina($$i$$)">
+            <select id="tipoCaracteres$$i$$" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
+              <option value="alfNumEsp">LeNúEsp</option>
+              <option value="num">Números</option>
+              <option value="alf">Letras</option>
+              <option value="defecto">Le+Núm</option>
+              <option value="rand">De todo</option>
+            </select>
+            <input value="10" id="longitud$$i$$" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
+        </td>
+        </tr>`;
   const colecta = () => {//alert('kk'+document.getElementById('n0'))
     let i = 0;
     let sitios = [];
@@ -121,26 +141,12 @@
         <th>clave</th>
       </tr>`;
     misSitios.forEach((sitio, i) => {
-      html += `<tr>
-        <td><input id="n${i}" type="text" value="${sitio.nombre}"></td>
-        <td><input id="url${i}" type="text" value="${sitio.url}"></td>
-        <td><input id="usuario${i}" type="text" value="${sitio.usuario}"></td>
-        <td><input id="clave${i}" value="${sitio.clave}" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
-          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
-          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
-            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
-            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
-            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
-            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
-              <option value="alfNumEsp">LeNúEsp</option>
-              <option value="num">Números</option>
-              <option value="alf">Letras</option>
-              <option value="defecto">Le+Núm</option>
-              <option value="rand">De todo</option>
-            </select>
-            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
-        </td>
-      </tr>`;
+      let aux=plantilla.replace('$$nombre$$',sitio.nombre);
+      aux=aux.replace('$$url$$',sitio.url);
+      aux=aux.replace('$$usuario$$',sitio.usuario);
+      aux=aux.replace('$$clave$$',sitio.clave);
+      aux=aux.replace(/\$\$i\$\$/g,i);
+      html +=aux;
     })
     document.getElementById('listaClaves').innerHTML = html;
   }
@@ -167,47 +173,19 @@
           usuario:document.getElementById('usuario' + i).value,
           clave:document.getElementById('clave' + i).value,
         }
-        html += `<tr>
-        <td><input id="n${i}" type="text" value="${aux.nombre}"></td>
-        <td><input id="url${i}" type="text" value="${aux.url}"></td>
-        <td><input id="usuario${i}" type="text" value="${aux.usuario}"></td>
-        <td><input id="clave${i}" value="${aux.clave}" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
-          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
-          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
-            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
-            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
-            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
-            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
-              <option value="alfNumEsp">LeNúEsp</option>
-              <option value="num">Números</option>
-              <option value="alf">Letras</option>
-              <option value="defecto">Le+Núm</option>
-              <option value="rand">De todo</option>
-            </select>
-            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
-        </td>
-        </tr>`;
+        let aux2=plantilla.replace('$$nombre$$',aux.nombre);
+        aux2=aux2.replace('$$url$$',aux.url);
+        aux2=aux2.replace('$$usuario$$',aux.usuario);
+        aux2=aux2.replace('$$clave$$',aux.clave);
+        aux2=aux2.replace(/\$\$i\$\$/g,i);
+        html +=aux2;
       }else{//si no se sube en blanco
-        html += `<tr>
-        <td><input id="n${i}" type="text" value=""></td>
-        <td><input id="url${i}" type="text" value=""></td>
-        <td><input id="usuario${i}" type="text" value=""></td>
-        <td><input id="clave${i}" value="" onmouseover="this.type='text'" onmouseout="this.type='password'" type="password"
-          ondblclick="copiarAlPortapapeles(this.id)" title="Doble click la copia al portapapeles.">
-          <input id="cambia${i}" value="+" type="button" title="Genera nueva clave de acuerdo con las opciones"
-            onclick="if(confirm('seguro que la quieres cambiar'))document.getElementById('clave${i}').value=generatePasswordRand(+document.getElementById('longitud${i}').value,document.getElementById('tipoCaracteres${i}').value)">
-            <input id="borra${i}" value="-" type="button" title="Elimina los datos del sitio correspondiente a la fila."
-            onclick="if(confirm('seguro que quieres quitar este sitio'))elimina(${i})">
-            <select id="tipoCaracteres${i}" title="Se puede elegir:\n\tLetras(may+min)+números+alguno de (-*?!@#$/(){}=.,;:);\n\tNumeros;\n\tLetras(may+min);\n\tLetras(may+min)+números;\n\tCaracteres totalmente aleatorios (no recomendado)">
-              <option value="alfNumEsp">LeNúEsp</option>
-              <option value="num">Números</option>
-              <option value="alf">Letras</option>
-              <option value="defecto">Le+Núm</option>
-              <option value="rand">De todo</option>
-            </select>
-            <input value="10" id="longitud${i}" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
-        </td>
-      </tr>`;
+        let aux2=plantilla.replace('$$nombre$$','');
+        aux2=aux2.replace('$$url$$','');
+        aux2=aux2.replace('$$usuario$$','');
+        aux2=aux2.replace('$$clave$$','');
+        aux2=aux2.replace(/\$\$i\$\$/g,i);
+        html +=aux2;
       }
       i++ 
     }
