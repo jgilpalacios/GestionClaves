@@ -28,13 +28,12 @@
       onclick="document.getElementById('e1').value=generatePasswordRand(256,'rand')">
     <input title="Genera un archivo csv con los datos de los sitios en claro, se puede abrir con excel, calc o el bloc de notas. ¡¡¡LAS CLAVES NO VAN ENCRIPTADAS!!!" name="aCSV" value="aCSV" type="button"
       onclick="aCSV()">
+    <select id="modo" title="Se puede elegir el aspecto de la lista de claves: en forma de tabla; o en bloques seguidos." onchange=" cambiaModo(this.value)">
+      <option value="0" selected>Bloques</option>
+      <option value="1">tabla</option>
+    </select>
   </p>
-  <!--<table style="width: 100%" border="1">
-    <tbody id="listaClaves">
-      
-    </tbody>
-  </table>-->
-  <div id="listaClaves" style="display: flex; justify-content:flex-start; flex-wrap: wrap; width: 100%; background-color: rgb(255, 255, 255);"></div>
+  <div id="listaClaves"></div>
 </body>
 <script type="text/javascript">
  
@@ -71,10 +70,15 @@
   let clave;
   let textoEnc;
   let texto;
+  let plantilla;
+  let cabecera;
+  let cola;
+  let modo=[
   /**
     * plantilla y cabecera para que se inserte como cuadros en un div
-    */ 
-  let plantilla=`<div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(220, 250, 220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1),0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
+    */
+   
+      {plantilla:`<div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(220, 250, 220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1),0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
         <p><input id="n$$i$$" type="text" value="$$nombre$$"></p>
         <p><input id="url$$i$$" type="text" value="$$url$$"></p>
         <p><input id="usuario$$i$$" type="text" value="$$usuario$$"></p>
@@ -92,17 +96,20 @@
               <option value="rand">De todo</option>
             </select>
             <input value="10" id="longitud$$i$$" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number"></p>
-      </div>`;
-      let cabecera=`<div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(250, 220,220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1), 0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
-        <p style="font-weight:bold;" title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">Nombre</p>
-        <p style="font-weight:bold;" title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">Url</p>
+      </div>`,
+        cabecera:` <div style="display: flex; justify-content:flex-start; flex-wrap: wrap; width: 100%; background-color: rgb(255, 255, 255);"><div style="display:inline-block; text-align:center;padding: .5em; margin:.2em; background-color:rgb(250, 220,220);border-radius: .5em 1em 1em 2em; box-shadow: 0 -3em 3em rgba(0,0,0,0.1), 0 0 0 2px rgb(255,255,255), 0.3em 0.3em 1em rgba(0,0,0,0.3)">
+        <p title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="font-weight:bold; cursor:pointer">Nombre</p>
+        <p title="Haz click para ordenar por url." onclick="ordena('url')" style="font-weight:bold; cursor:pointer">Url</p>
         <p style="font-weight:bold;">Usuario</p>
         <p style="font-weight:bold;">Clave</p>
-      </div>`;
+      </div>`,     
+        cola:'</div>',
+        nombre:'Div'
+      },
    /**
     * plantilla y cabecera para que se inserte en una tabla
     */   
-  /*let plantilla=`<tr>
+        {plantilla:`<tr>
         <td><input id="n$$i$$" type="text" value="$$nombre$$"></td>
         <td><input id="url$$i$$" type="text" value="$$url$$"></td>
         <td><input id="usuario$$i$$" type="text" value="$$usuario$$"></td>
@@ -121,13 +128,18 @@
             </select>
             <input value="10" id="longitud$$i$$" min="4" max="50" style="width: 3em" title="Pon la longitud de la clave" type="number">
         </td>
-        </tr>`;
-        let cabecera=`<tr>
+        </tr>`,
+        cabecera:`<table style="width: 100%" border="1">
+    <tbody><tr>
         <th title="Haz click para ordenar por nombre." onclick="ordena('nombre')" style="cursor:pointer">nombre</th>
         <th title="Haz click para ordenar por url." onclick="ordena('url')" style="cursor:pointer">url del sitio</th>
         <th>usuario</th>
         <th>clave</th>
-      </tr>`;*/
+      </tr>`,
+          cola:`</tbody>
+        </table>`,
+        nombre:'Tabla'
+    }];
      
   const colecta = () => {//alert('kk'+document.getElementById('n0'))
     let i = 0;
@@ -234,6 +246,19 @@
     //generaTabla();
   }
 
+  /**
+   * Para poder cambiar el modo de presentación de la lista de sitios.
+   */
+  
+  let cambiaModo=(valor)=>{
+    misSitios=colecta();
+    cabecera=modo[valor].cabecera;
+    plantilla=modo[valor].plantilla
+    cola=modo[valor].cola;
+    generaTabla();
+
+  }
+  
   //Esta es para que funcione el boton para file
   const leerArchivo = (e) => {
     let archivo = e.target.files[0];
@@ -366,7 +391,7 @@
     generaTabla();
   }
 
-
+  cambiaModo(0);//se inicia con el valor por defecto, div
   document.getElementById('file-encript').addEventListener('change', leerArchivo, false);
   document.getElementById('file-claves').addEventListener('change', leerArchivo, false);
   generaTabla();
