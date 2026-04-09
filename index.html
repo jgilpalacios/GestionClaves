@@ -187,7 +187,12 @@
     if (!clavePersonal) {
       alert('Falta la clave personal.')
     } else {
-      let aux = Aes.Ctr.decrypt(enc, clave, 256);
+      if(document.getElementById('e1').value === ''){
+        claveEnc = document.getElementById('encArea2').value;
+        //alert(claveEnc);
+        clave = Aes.Ctr.decrypt(claveEnc, clavePersonal, 256);
+      }
+      let aux = Aes.Ctr.decrypt(enc, clave, 256)
       return { clave: clave, texto: Aes.Ctr.decrypt(aux, clavePersonal, 256) };
     }
   }
@@ -278,6 +283,7 @@
   }
 
   //Esta es para que funcione el boton para file
+  let claveDecEnfile=false
   const leerArchivo = (e) => {
     let archivo = e.target.files[0];
     //alert(e.currentTarget.id);
@@ -293,6 +299,7 @@
         textoEnc = contenido;
         document.getElementById('encArea1').innerText = textoEnc;
       } else if (tipo === 'file-encript') {
+        claveDecEnfile=true;
         claveEnc = contenido;//alert(claveEnc);
         document.getElementById('encArea2').value = contenido;
         //document.getElementById('e1').value = contenido;
@@ -360,7 +367,7 @@
   const lanzaProceso = () => {
     //let res=decripta(textoEnc, claveEnc, document.getElementById('clavep').value)
     let res;
-    if (document.getElementById('encArea2').value === '') {//se introduce la clave decriptadora a mano en lugar de leerla de un archivo
+    if (document.getElementById('encArea2').value === ''|| (document.getElementById('e1').value === '' && !claveDecEnfile)) {//se introduce la clave decriptadora a mano en lugar de leerla de un archivo
       alert('a mano');
       res = decriptaAmano(textoEnc, document.getElementById('e1').value, document.getElementById('clavep').value)
     } else res = decripta(textoEnc, claveEnc, document.getElementById('clavep').value)
